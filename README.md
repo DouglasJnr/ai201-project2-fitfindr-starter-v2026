@@ -57,26 +57,27 @@
      on, and if you don't decide it here you'll discover it as a crash in
      Milestone 5. -->
 
+
 ### `search_listings`
 
-- **What it does:**
-- **Inputs:** <!-- name and type each: `max_price` (float), not "a price" -->
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Searches the listing data for an item matching the description it receives as input, with size and price ceiling optionally included.
+- **Inputs:** description (str), size (str) | None = None, max_price (float) | None = None
+- **Returns:** A list of listing dictionaries, each with id, title, description, category, style_tags (list), size, condition, price (float), colors (list), brand (str or None), platform
+- **When it has nothing:** Returns an empty list
 
 ### `suggest_outfit`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Uses the gifted item and users wardrobe to suggest one or two maximum outfits.
+- **Inputs:** new_item (listing dict), wardrobe (dict) 
+- **Returns:** Non-empty string with 1-2 outfit suggestions from wardrobe
+- **When it has nothing:** Non-empty string with general styling suggestions
 
 ### `create_fit_card`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Generate a caption based off the new item and vibe of the outfit
+- **Inputs:** outfit (str), new_outfit (listing dict)
+- **Returns:** Non-empty string caption, 2-4 sentences in length
+- **When it has nothing:** returns a descriptive string
 
 ---
 
