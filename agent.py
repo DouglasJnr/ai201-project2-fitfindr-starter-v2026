@@ -50,7 +50,7 @@ def new_session(query: str, wardrobe: dict) -> dict:
 # ── parsing the query ─────────────────────────────────────────────────────────
 
 # Sizes a user is likely to type. Matched as whole words so that the "M" in
-# "Medium Wash" or the "L" in "L/XL" can't be mistaken for a request.
+# "Medium Wash" or the "L" in "L/XL" can't be mistaken for a request
 _SIZE_WORDS = r"XXS|XS|S|M|L|XL|XXL"
 
 _PRICE_RE = re.compile(r"(?:under|below|less than|max|up to)?\s*\$\s*(\d+(?:\.\d+)?)", re.I)
