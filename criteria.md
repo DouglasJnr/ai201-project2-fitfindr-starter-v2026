@@ -25,6 +25,7 @@ Given a query that matches at least one listing, the agent completes all three
 tool calls and returns a fit card — in at least 4 of 5 tries.
 
 **Why this target:**
+My search is a plain keyword match and some phrasings will miss. As a result I allow 1 miss.
 <!-- Why 4 of 5 and not 5 of 5? Something about your search, probably —
      "my search is a plain keyword match and some phrasings will miss" is a
      real answer. -->
@@ -37,6 +38,9 @@ Given a query that matches no listings, the agent stops before calling
 `suggest_outfit` and returns a message naming what to change — 5 of 5 tries.
 
 **Why this target:**
+
+When a query matches no listings, according to the branch in my code, no further tools should be called. Because this is a deterministic path it has no reason to miss and 5 of 5 is a reasonable result.
+
 <!-- Why is 5 of 5 reasonable here when criterion 1 isn't? What's different
      about this path? -->
 
@@ -44,6 +48,7 @@ Given a query that matches no listings, the agent stops before calling
 
 ## 3. Something about state
 
+For 5 queries that each match at least on listing, the id of search_results[0],session[selected_item], the item suggested_outfit and create_fit_card received are all the same - 5 of 5 tries
 <!-- YOU WRITE THIS ONE.
 
      How would you know that the item your search found is the same item the
@@ -58,12 +63,14 @@ Given a query that matches no listings, the agent stops before calling
 
 **Why this target:**
 
+Nothing on this path calls the model, so a mismatch can only come from my code. A deterministic path has no reason to miss, so anything below 5 of 5 would be tolerating a bug.
 
 
 ---
 
 ## 4. Something about the fit card
 
+For 5 different items, not two fit cards share the same first sentence and each card is 2-4 sentences in 4 of 4 tries.
 <!-- YOU WRITE THIS ONE.
 
      The fit card calls a model, so the same input can produce different words
@@ -79,11 +86,13 @@ Given a query that matches no listings, the agent stops before calling
 
 **Why this target:**
 
-
+The caption comes from a model, so even though I can ask for 2-4 sentences and a distinct opening, neither can guaranteed. Allowing 1 miss in 5 accomodates that, but any lower would mean the prompt isn't controlling the output
 
 ---
 
 ## 5. Your choice
+
+For 5 diffent items with an empty wardrobe, suggest_outfit returns advice that names at least one of the item's own colors and at least two specific grament types (e.g "jeans", "loafers") in 4 of 5 runs.
 
 <!-- YOU WRITE THIS ONE TOO.
 
@@ -96,7 +105,7 @@ Given a query that matches no listings, the agent stops before calling
 
 **Why this target:**
 
-
+Whether the advice mentions the item's colors and concrete pieces depends on the model following the prompt so I allow one miss.
 
 ---
 
