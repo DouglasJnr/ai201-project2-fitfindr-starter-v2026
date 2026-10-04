@@ -40,6 +40,8 @@ def _keywords(text: str) -> set[str]:
 def _size_tokens(size: str) -> set[str]:
     cleaned = re.sub(r"\([^)]*\)", " ", size or "") #drop parentheticals
     parts = [p.strip().upper() for p in cleaned.split("/")]
+    # "W30 L30" is waist + inseam; someone asking for W30 means the waist
+    parts += [p.split()[0] for p in parts if re.fullmatch(r"W\d+\s+L\d+", p)]
     return {p for p in parts if p} #no empty or long tokens
 
 def _size_matches(wanted: str, listing_size: str) -> bool:
@@ -56,7 +58,6 @@ def search_listings(
     size: str | None = None,
     max_price: float | None = None,
 ) -> list[dict]:
-
 
     """
     Search the listings data for items matching a description, and optionally a
@@ -104,8 +105,51 @@ def search_listings(
     Test it from a terminal before you move on:
         python -c "from tools import search_listings; print(search_listings('graphic tee', max_price=30))"
     """
-    # TODO: replace this with your implementation
-    return []
+    wanted = _keywords(description)
+    if not wanted:
+        return []
+
+    scored = []
+    for listing in load_listings():
+        if max_price is not None and listing["price"] > max_price:
+            continue
+        if not _size_matches(size, listing["size"]):
+            continue
+
+        # Title words count double: the title is what the seller chose to lead
+        # with, so a hit there is a stronger signal than one in the description.
+        title_words = _keywords(listing["title"])
+        other_words = _keywords(" ".join([
+            listing["description"],
+            listing["category"],
+            " ".join(listing["style_tags"]),
+            " ".join(listing["colors"]),
+            listing["brand"] or "",  # brand is None for most listings
+        ]))
+        score = 2 * len(wanted & title_words) + len(wanted & (other_words - title_words))
+        if score > 0:
+            scored.append((score, listing))
+
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    return [listing for _, listing in scored[: config.SEARCH_RESULT_LIMIT]]
+    
+
+# ── Shared by search_listings & suggest_outfit─────────────────────────────────────────────
+
+def _describe_item(item: dict) -> str:
+    """The listing as plain lines for a prompt. Brand is left out when it's None."""
+    lines = [
+        f"Title: {item.get('title')}",
+        f"Category: {item.get('category')}",
+        f"Colors: {', '.join(item.get('colors') or []) or 'not listed'}",
+        f"Style tags: {', '.join(item.get('style_tags') or []) or 'none'}",
+        f"Condition: {item.get('condition')}",
+        f"Price: ${item.get('price'):g}",
+        f"Platform: {item.get('platform')}",
+    ]
+    if item.get("brand"):
+        lines.insert(1, f"Brand: {item['brand']}")
+    return "\n".join(lines)
 
 
 # ── Tool 2: suggest_outfit ────────────────────────────────────────────────────
@@ -138,8 +182,44 @@ def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
     Test it from a terminal before you move on:
         python -c "from tools import suggest_outfit; from utils.data_loader import get_example_wardrobe, load_listings; print(suggest_outfit(load_listings()[0], get_example_wardrobe()))"
     """
-    # TODO: replace this with your implementation
-    return ""
+    items = (wardrobe or {}).get("items") or []
+    item_text = _describe_item(new_item)
+
+    if not items:
+        prompt = (
+            f"Someone is thinking of purchasing this item:\n{item_text}\n\n"
+            "They haven't told us anything about their wardrobe. Suggest one or "
+            "two outfits built around this item. Name specific garment types "
+            "(e.g. 'straight-leg jeans', 'white canvas sneakers') and say which "
+            "colors pair well with the item's own colors. Don't say 'your' or "
+            "suggest they already own anything. Keep it under 120 words."
+        )
+        fallback = (
+            f"No wardrobe to work from, so keep it simple: pair the "
+            f"{new_item.get('title')} with neutral basics and let it be the "
+            f"statement piece."
+        )
+    else:
+        wardrobe_text = "\n".join(
+            f"- {w.get('name')} ({w.get('category')}; "
+            f"{', '.join(w.get('colors') or [])})"
+            for w in items
+        )
+        prompt = (
+            f"Someone is thinking about buying this thrifted item:\n{item_text}\n\n"
+            f"Here is what they already own:\n{wardrobe_text}\n\n"
+            "Suggest one or two outfits that combine the new item with pieces "
+            "from their wardrobe. Name each wardrobe piece exactly as it's "
+            "written above, and only use pieces from that list. One line on why "
+            "each outfit works. Keep it under 120 words."
+        )
+        fallback = (
+            f"Try the {new_item.get('title')} with the "
+            f"{items[0].get('name')} from your wardrobe."
+        )
+
+    # generate() can hand back "" if the model returns no text
+    return generate(prompt) or fallback
 
 
 # ── Tool 3: create_fit_card ───────────────────────────────────────────────────
@@ -178,5 +258,31 @@ def create_fit_card(outfit: str, new_item: dict) -> str:
     Test it from a terminal before you move on:
         python -c "from tools import create_fit_card; from utils.data_loader import load_listings; print(create_fit_card('jeans and white sneakers', load_listings()[0]))"
     """
-    # TODO: replace this with your implementation
-    return ""
+
+    if not outfit or not outfit.strip():
+        return (
+            f"No outfit suggestion came through for the {new_item.get('title')}, "
+            f"so there's nothing to caption yet. Run suggest_outfit first."
+        )
+
+    prompt = (
+        f"Write a caption for a social media post about this thrift find:\n"
+        f"{_describe_item(new_item)}\n\n"
+        f"The outfit it's styled in:\n{outfit.strip()}\n\n"
+        "Rules:\n"
+        "- 2 to 4 sentences, in a casual first-person voice, like a real post, "
+        "not a product description.\n"
+        "- The person posting BOUGHT this item and is showing off the find. They are "
+        "not selling it, so no 'shop my page' or 'snag it before I keep it'.\n"
+        f"- Mention the item, the price (${new_item.get('price'):g}) and the "
+        f"platform ({new_item.get('platform')}) once each.\n"
+        "- Be specific about the vibe of this outfit.\n"
+        "- Don't open with 'Just thrifted' or 'New find'.\n"
+        "- Return only the caption, no quotes or hashtag block."
+    )
+    caption = generate(prompt)
+    return caption or (
+        f"Found the {new_item.get('title')} for ${new_item.get('price'):g} "
+        f"on {new_item.get('platform')}."
+    )
+    
