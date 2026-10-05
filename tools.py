@@ -187,8 +187,9 @@ def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
 
     if not items:
         prompt = (
-            f"Someone is thinking of purchasing this item:\n{item_text}\n\n"
-            "They haven't told us anything about their wardrobe. Suggest one or "
+            f"You are an experienced fashion stylist. Someone is thinking of "
+            "purchasing this item:\n{item_text}\n\n"
+            "They haven't told us anything about what else they own. Suggest one or "
             "two outfits built around this item. Name specific garment types "
             "(e.g. 'straight-leg jeans', 'white canvas sneakers') and say which "
             "colors pair well with the item's own colors. Don't say 'your' or "
@@ -206,7 +207,8 @@ def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
             for w in items
         )
         prompt = (
-            f"Someone is thinking about buying this thrifted item:\n{item_text}\n\n"
+            f"You are an experienced fashion stylist. Someone is thinking of " 
+            "purchasing this thrifted item:\n{item_text}\n\n"
             f"Here is what they already own:\n{wardrobe_text}\n\n"
             "Suggest one or two outfits that combine the new item with pieces "
             "from their wardrobe. Name each wardrobe piece exactly as it's "

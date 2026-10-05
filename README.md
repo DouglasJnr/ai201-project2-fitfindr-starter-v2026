@@ -40,7 +40,7 @@
 ## What This Does
 
 <!-- Three or four sentences: what a user asks for, and what they get back. -->
-
+FitFindr is an agent that allows a user to enter a description of what they are looking for as a query. The query is accepted and parsed and handed to the first tool search_listings, which searches a database of listings to look for any matches, and returns a list of listing dictionaries or an empty list. If empty, the agent stops. If matching listings are found, the closest match is selected and passed to suggest_outfit, which suggests 1-2 outfits based on the users wardrobe, or genral styling advice if the wardrobe is empty. Lastly the selected item and suggested outfit are passed to create_fit_card which generates a caption for the user, highlighting the thrifted item and the vibe of the suggested outfit.
 
 
 ---
@@ -108,9 +108,22 @@
 
 **Where it lives:** `agent.py::run_agent`
 
-**How the query is parsed:** <!-- regex, string splitting, or asking the model — say which -->
+**How the query is parsed:** Regex, in `agent.py::parse_query`, with no model call. It pulls out three things in this order, cutting each one out of the text once it's found:
+1.Price 2.Size 3.Description
 
-**What moves through the session:** <!-- which fields, in what order -->
+**What moves through the session:** One dict, created by `new_session()`, holds everything. Each step writes its result into the session, and the next step reads it back from there. Nothing is passed straight from one call to the next.
+
+| Order | Field | Written by | Read by |
+|---|---|---|---|
+| 1 | `query`, `wardrobe` | `new_session()` | `parse_query` / `suggest_outfit` |
+| 2 | `parsed` (description, size, max_price) | `parse_query` | `search_listings` |
+| 3 | `search_results` (list of listing dicts) | `search_listings` | the branch |
+| 4 | `error` (only if the search came back empty; the run stops here) | the branch | `_show` / `app.py` |
+| 5 | `selected_item` (`search_results[0]`) | the loop | `suggest_outfit`, `create_fit_card` |
+| 6 | `outfit_suggestion` (str) | `suggest_outfit` | `create_fit_card` |
+| 7 | `fit_card` (str) | `create_fit_card` | returned to the user |
+
+If the run stops at step 4, `selected_item`, `outfit_suggestion` and `fit_card` stay `None`. If the model can't be reached, `error` is set instead and `search_results` is kept.
 
 ---
 
@@ -127,6 +140,47 @@
 $ python app.py ask '...'
 
 ```
+python app.py ask 'vintage graphic tee under $30'
+[1] parse_query
+      in:  vintage graphic tee under $30
+      out: dict with keys: description, size, max_price
+[2] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: 10 items: Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey, Y2K Baby Tee — Butterfly Print … +7 more
+      →    10 match(es)
+[3] select_item
+      out: Graphic Tee — 2003 Tour Bootleg Style ($24.0, depop)
+[4] suggest_outfit
+      in:  Graphic Tee — 2003 Tour Bootleg Style ($24.0, depop)
+      out: **Outfit 1** - Graphic Tee — 2003 Tour Bootleg Style - Baggy straight-leg jeans, dark wash - Black combat boot…
+      →    10 wardrobe item(s)
+[5] create_fit_card
+      in:  Graphic Tee — 2003 Tour Bootleg Style ($24.0, depop)
+      out: I literally scored this 2003 tour bootleg graphic tee for only $24 on Depop and I'm obsessed with how heavy th…
+
+  Found:    Graphic Tee — 2003 Tour Bootleg Style — $24.0 on depop
+
+  Outfit:   **Outfit 1**
+- Graphic Tee — 2003 Tour Bootleg Style
+- Baggy straight-leg jeans, dark wash
+- Black combat boots
+- Vintage black denim jacket
+- Black crossbody bag
+
+*Why it works:* This creates an effortless, head-to-toe monochrome grunge aesthetic using classic streetwear layers and textures.
+
+**Outfit 2**
+- Graphic Tee — 2003 Tour Bootleg Style
+- Wide-leg khaki trousers
+- Brown leather belt
+- Chunky white sneakers
+- Black cropped zip hoodie
+
+*Why it works:* Tucking the graphic tee into the trousers with a belt anchors the relaxed fit, while the hoodie and sneakers add a casual streetwear balance.
+
+  Fit card: I literally scored this 2003 tour bootleg graphic tee for only $24 on Depop and I'm obsessed with how heavy the cotton is. I paired it with dark wash baggy jeans, a vintage denim jacket, and combat boots for the ultimate effortless monochrome grunge look. It also looks so sick tucked into khaki trousers with a belt and a cropped hoodie for a more casual streetwear vibe.
+
+1 model calls this session, 1 served from cache, 358 prompt + 82 output tokens
 
 **The three tools, tested one at a time**
 
@@ -179,15 +233,15 @@ Scored these vintage Levi's 501 jeans for only $38 scrolling through Depop and I
 
 **Moment 1**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked for an evaluation of my 3 criterion to ensure they were testible.
+- *What came back:* It gave me a two part rewritten criteria for getting inputting empty wardrobe in suggest_outfit for 5 different items.
+- *What I changed:* i removed the first part of not returning empty which is handled by my code deterministicaly, and maintained just two specific garment criteria.
 
 **Moment 2**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I gave Claude my suggest_outfit spec.
+- *What came back:* Returned a complete working function.
+- *What I changed:* I added a role in the prompt, and modified the rules slightly.
 
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
