@@ -141,6 +141,7 @@ def _describe_item(item: dict) -> str:
     lines = [
         f"Title: {item.get('title')}",
         f"Category: {item.get('category')}",
+        f"Description: {item.get('description')}",
         f"Colors: {', '.join(item.get('colors') or []) or 'not listed'}",
         f"Style tags: {', '.join(item.get('style_tags') or []) or 'none'}",
         f"Condition: {item.get('condition')}",
@@ -187,8 +188,8 @@ def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
 
     if not items:
         prompt = (
-            f"You are an experienced fashion stylist. Someone is thinking of "
-            "purchasing this item:\n{item_text}\n\n"
+            "You are an experienced fashion stylist. Someone is thinking of "
+            f"purchasing this item:\n{item_text}\n\n"
             "They haven't told us anything about what else they own. Suggest one or "
             "two outfits built around this item. Name specific garment types "
             "(e.g. 'straight-leg jeans', 'white canvas sneakers') and say which "
@@ -207,8 +208,8 @@ def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
             for w in items
         )
         prompt = (
-            f"You are an experienced fashion stylist. Someone is thinking of " 
-            "purchasing this thrifted item:\n{item_text}\n\n"
+            "You are an experienced fashion stylist. Someone is thinking of " 
+            f"purchasing this thrifted item:\n{item_text}\n\n"
             f"Here is what they already own:\n{wardrobe_text}\n\n"
             "Suggest one or two outfits that combine the new item with pieces "
             "from their wardrobe. Name each wardrobe piece exactly as it's "
