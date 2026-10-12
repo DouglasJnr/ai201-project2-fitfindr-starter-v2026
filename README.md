@@ -568,32 +568,16 @@ Trace:
 
 ## Verdicts and Diagnoses
 
-<!-- MET or MISSED per criterion against LAST UNIT's target, plus a sentence on
-     how you decided.
-
-     Then, for every miss: which of the four places it happened — a tool, the
-     loop's branch, the session, or the model's output — AND the mechanism.
-
-     Not a diagnosis:  "The fit card was bad."
-     A diagnosis:      "The fit card criterion missed on 2 of 5 items. Both had
-                        an empty brand field. My prompt puts the brand in the
-                        first sentence, so the card opened with a blank and read
-                        like a fragment. The tool worked; the prompt assumed a
-                        field that isn't always there."
-
-     Look for a pattern. Three misses on the same tool is one problem, not
-     three. -->
-
 | # | Criterion | Target | Verdict | How I decided |
 |---|---|---|---|---|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
-| 4 |  |  |  |  |
-| 5 |  |  |  |  |
+| 1 | Matching query completes | 4 of 5 | MISSED | Only 3 of the 5 runs completed due to model not being reached which is a miss |
+| 2 | Impossible query stops early | 5 of 5 | MET | Queries with no matches all stop before calling the remaining tools |
+| 3 | Matching selected_item in session passed on | 5 of 5 | MET | The same selected item was input for suggest_outfit and create_fit_card 5/5 times. |
+| 4 | Fit cards share no opening sentence | 4 of 5 | MET | Successful cards are 2-3 sentences and the opening sentences differ across the five items on at least 4 of the 5 tries |
+| 5 | General styling advice mentions 2 items and complementary colors | 4 of 5 | MET | The style suggestions refer to item's colors and include multiple garment types on all tries |
 
 **Diagnoses**
-
+Criterion 1, the matching query completes criterion, missed on 2 of 5 tries at the model-dependent step after `suggest_outfit`, specifically when the agent tried to continue to the `create_fit_card`. The model was experiencing high demand, so the agent handled the error by stopping early and preserving the search results.
 
 
 ---
@@ -613,20 +597,72 @@ Trace:
 **Happy path**
 
 ```
+[1] parse_query
+      in:  vintage graphic tee under $30
+      out: dict with keys: description, size, max_price
+[2] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: 10 items: Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey, Y2K Baby Tee — Butterfly Print … +7 more
+      →    10 match(es)
+[3] select_item
+      out: Graphic Tee — 2003 Tour Bootleg Style ($24.0, depop)
+[4] suggest_outfit
+      in:  Graphic Tee — 2003 Tour Bootleg Style ($24.0, depop)
+      out: **Outfit 1** - Graphic Tee — 2003 Tour Bootleg Style - Baggy straight-leg jeans, dark wash - Vintage black den…
+      →    10 wardrobe item(s)
+[5] create_fit_card
+      in:  Graphic Tee — 2003 Tour Bootleg Style ($24.0, depop)
+      out: Scored this faded 2003 tour bootleg tee on depop for just $24, and it’s already becoming my ultimate grunge st…
 
+  Found:    Graphic Tee — 2003 Tour Bootleg Style — $24.0 on depop
+
+  Outfit:   **Outfit 1**
+- Graphic Tee — 2003 Tour Bootleg Style
+- Baggy straight-leg jeans, dark wash
+- Vintage black denim jacket
+- Black combat boots
+- Black crossbody bag
+
+*Why it works:* Double black denim creates an effortless, head-to-toe grunge aesthetic that lets the vintage graphic pop.
+
+**Outfit 2**
+- Graphic Tee — 2003 Tour Bootleg Style
+- Wide-leg khaki trousers
+- Black cropped zip hoodie
+- Chunky white sneakers
+- Brown leather belt
+
+*Why it works:* Pairing the boxy tee with relaxed khakis and a cropped hoodie nails a balanced, streetwear-inspired silhouette.
+
+  Fit card: Scored this faded 2003 tour bootleg tee on depop for just $24, and it’s already becoming my ultimate grunge staple. I threw it on with double black denim and combat boots for that effortless, head-to-toe dark wash aesthetic that lets the vintage graphic really pop.
+
+2 model calls this session, 674 prompt + 209 output tokens
 ```
 
 **Empty search**
 
 ```
+[1] parse_query
+      in:  gucci puffer under $200
+      out: dict with keys: description, size, max_price
+[2] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: [] (empty)
+      →    0 match(es)
+[3] branch
+      →    search returned []: stopping before suggest_outfit
 
+  Nothing in the listings matched description 'gucci puffer', under $200.
+Things to change: try broader words — 'jacket' finds more than 'cropped corduroy jacket'; raise the price ceiling above $200.
+
+0 model calls this session
 ```
 
 **On the MCP move:** <!-- what changed in your code, and whether anything
 behaved differently afterwards. If the rewire didn't work, say exactly where it
 broke — the error text and the last thing that worked. That earns the point in
 full. -->
-
+Nothing behaved differently afterwards.
 
 
 ---
