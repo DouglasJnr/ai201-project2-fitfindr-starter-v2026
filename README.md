@@ -243,6 +243,16 @@ Scored these vintage Levi's 501 jeans for only $38 scrolling through Depop and I
 - *What came back:* Returned a complete working function.
 - *What I changed:* I added a role in the prompt, and modified the rules slightly.
 
+**Moment 3**
+*What I asked for:* I asked Claude how to make my 5 distinct queries for Criterion 4 all testable in a single run
+*What came back:* Returned a plan that would involve modifying the `run_eval.py` functions.
+*What I changed:* I decided to implement the queries as individual scenarios that were all ran 5 times and then aggregate the results from the run log to determine whether my criteria passed or not.
+
+**Moment 4**
+*What I asked for:* I asked Claude to generate code for a retry branch in `generate.py`.
+*What came back:* Returned two complete working functions.
+*What I changed:* I implemente the functions into `generate.py` and modified part of the code to meet my needs.
+
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
      Don't fill these in during unit 3.
@@ -711,7 +721,7 @@ Yes. It helped Criterion 1 improve from 3/5 to 5/5, allowing eveyr matching-quer
 <!-- For each criterion still missed: what you'd do, and why you stopped where
      you did. "I ran out of time" is fine if it's true. Pretending nothing is
      left is not. -->
-
+All my criteria passed, even though my retry branch didn't stop every model unavailable result, it did improve the results and was a useful addition.
 
 
 <!-- ═════════════════════════════════════════════════════════════════════
