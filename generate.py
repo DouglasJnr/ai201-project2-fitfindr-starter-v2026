@@ -43,6 +43,7 @@ _prompt_tokens = 0
 _output_tokens = 0
 _client = None
 _budget_warned = False
+_TRANSIENT_RETRIES = 2
 
 
 class QuotaGuard(Exception):
@@ -241,6 +242,23 @@ def _retry_delay(exc: Exception, attempt: int) -> float:
     return min(65.0, max(2.0 ** attempt, hinted))
 
 
+def _is_transient_unavailable(exc: Exception) -> bool:
+    """Return whether the provider error may succeed if tried again shortly."""
+    message = str(exc).lower()
+    return "503" in message or "unavailable" in message
+
+
+def _transient_retry_delay(exc: Exception, attempt: int) -> float:
+    """Use a short bounded delay for temporary provider unavailability."""
+    text = str(exc)
+    match = (
+        re.search(r"retry in (\d+(?:\.\d+)?)\s*s", text, re.I)
+        or re.search(r"retryDelay['\"]?\s*:\s*['\"](\d+(?:\.\d+)?)s", text)
+    )
+    hinted = float(match.group(1)) if match else 0.0
+    return min(10.0, max(1.0, 2.0 ** attempt, hinted))
+
+
 def _get_client():
     global _client
     if _client is None:
@@ -296,6 +314,7 @@ def generate(
     _check_budget()
 
     last_error: Exception | None = None
+    transient_attempts = 0
     for attempt in range(config.MAX_RETRIES):
         _wait_for_slot()
         try:
@@ -328,18 +347,37 @@ def generate(
                 or "resource" in message and "exhaust" in message
                 or "rate" in message and "limit" in message
             )
-            if not rate_limited:
-                raise ModelUnavailable(_explain(exc)) from exc
-            backoff = _retry_delay(exc, attempt)
-            print(
-                f"  [rate limit] service pushed back. Waiting {backoff:.0f}s "
-                f"(attempt {attempt + 1} of {config.MAX_RETRIES}). This is "
-                f"the limiter doing its job, not a bug.",
-                file=sys.stderr,
-                flush=True,
-            )
-            time.sleep(backoff)
+            if rate_limited:
+                backoff = _retry_delay(exc, attempt)
+                print(
+                    f"  [rate limit] service pushed back. Waiting {backoff:.0f}s "
+                    f"(attempt {attempt + 1} of {config.MAX_RETRIES}). This is "
+                    f"the limiter doing its job, not a bug.",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                time.sleep(backoff)
+                continue
 
+            if _is_transient_unavailable(exc):
+                if transient_attempts >= _TRANSIENT_RETRIES:
+                    raise ModelUnavailable(_explain(exc)) from exc
+                transient_attempts += 1
+                backoff = _transient_retry_delay(exc, transient_attempts)
+                print(
+                    f"  [model unavailable] temporary service failure. Waiting "
+                    f"{backoff:.0f}s (retry {transient_attempts} of "
+                    f"{_TRANSIENT_RETRIES}).",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                time.sleep(backoff)
+                continue
+
+            raise ModelUnavailable(_explain(exc)) from exc
+
+    if last_error is not None and _is_transient_unavailable(last_error):
+        raise ModelUnavailable(_explain(last_error)) from last_error
     raise RuntimeError(
         f"Still rate limited after {config.MAX_RETRIES} attempts. Wait a "
         f"minute and try again — your key is fine.\nLast error: {last_error}"
