@@ -263,15 +263,303 @@ Scored these vintage Levi's 501 jeans for only $38 scrolling through Depop and I
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 |---|---|---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |  |  |
+| 1. Matching query completes | 4 of 5 | FAIL | PASS | PASS | PASS | FAIL | MISSED |
+| 2. Impossible query stops early | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET |
+| 3. Matching selected_item in session passed on | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET |
+| 4. Fit cards share no opening sentence | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET |
+| 5. General styling advice mentions 2 items and complementary colors | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET |
 
 **Real output from one try**, pasted as text, naming the file and function
 that produced it:
 
+```
+Produced by: `run_eval.py::main`
+- Loop: `agent.py::run_agent` · tools: `tools.py`
+
+### matching query completes
+
+- Query: `vintage graphic tee under $30`
+- Wardrobe: example
+
+**Try 2**
+
+- stopped early: no
+- selected_item: Graphic Tee — 2003 Tour Bootleg Style ($24.0, depop)
+- search_results: 10
+
+Outfit suggestion:
+
+```
+**Outfit 1**
+- Graphic Tee — 2003 Tour Bootleg Style
+- Baggy straight-leg jeans, dark wash
+- Black combat boots
+- Black crossbody bag
+*Why it works:* It leans into an authentic grunge aesthetic, letting the boxy tee and dark wash denim create a seamless, effortless 90s silhouette anchored by rugged boots.
+
+**Outfit 2**
+- Graphic Tee — 2003 Tour Bootleg Style
+- Wide-leg khaki trousers
+- Brown leather belt
+- Chunky white sneakers
+*Why it works:* Tucking the vintage tee into the khaki trousers balances the relaxed proportions while the belt and sneakers add a cool, high-low streetwear edge.
+```
+
+Fit card:
+
+```
+Scored this 2003 tour bootleg graphic tee for only $24 on Depop and I'm honestly obsessed with how soft and worn-in it is. I paired it with wide-leg khaki trousers and chunky white sneakers to lean into that effortless high-low streetwear edge. It's giving major vintage grunge without even trying.
+```
+
+Trace:
+
+```
+[1] parse_query
+      in:  vintage graphic tee under $30
+      out: dict with keys: description, size, max_price
+[2] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: 10 items: Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey, Y2K Baby Tee — Butterfly Print … +7 more
+      →    10 match(es)
+[3] select_item
+      out: Graphic Tee — 2003 Tour Bootleg Style ($24.0, depop)
+[4] suggest_outfit
+      in:  Graphic Tee — 2003 Tour Bootleg Style ($24.0, depop)
+      out: **Outfit 1** - Graphic Tee — 2003 Tour Bootleg Style - Baggy straight-leg jeans, dark wash - Black combat boot…
+      →    10 wardrobe item(s)
+[5] create_fit_card
+      in:  Graphic Tee — 2003 Tour Bootleg Style ($24.0, depop)
+      out: Scored this 2003 tour bootleg graphic tee for only $24 on Depop and I'm honestly obsessed with how soft and wo…
+```
+
+### impossible query stops early
+
+- Query: `designer ballgown size XXS under $5`
+- Wardrobe: example
+
+**Try 2**
+
+- stopped early: yes — Nothing in the listings matched description 'designer ballgown', size XXS, under $5.
+Things to change: try broader words — 'jacket' finds more than 'cropped corduroy jacket'; drop the size, or try a neighbouring one; raise the price ceiling above $5.
+- selected_item: (none)
+- search_results: 0
+
+Trace:
+
+```
+[1] parse_query
+      in:  designer ballgown size XXS under $5
+      out: dict with keys: description, size, max_price
+[2] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: [] (empty)
+      →    0 match(es)
+[3] branch
+      →    search returned []: stopping before suggest_outfit
+```
+
+### empty wardrobe
+
+- Query: `denim jacket under $50`
+- Wardrobe: empty
+
+**Try 2**
+
+- stopped early: no
+- selected_item: Denim Jacket — Light Wash, Cropped ($42.0, poshmark)
+- search_results: 7
+
+Outfit suggestion:
+
+```
+Pair this light wash Wrangler jacket with black straight-leg trousers and a fitted ribbed white tank top for a high-contrast, effortless daytime look. Alternatively, layer it over a black ribbed-knit midi dress paired with chunky black leather loafers. 
+
+Because the jacket is a pale, ice-blue shade, it acts as a neutral. It pairs best with stark black, crisp white, heather gray, and olive green to ground the lightness of the denim. Avoid pairing it with a medium-wash denim bottom to prevent a mismatched Canadian tuxedo effect. Finish either outfit with minimalist silver jewelry to complement the hardware.
+```
+
+Fit card:
+
+```
+Scored this vintage Wrangler denim jacket on Poshmark for just $42 and I'm obsessed with the structured shoulders and ice-blue wash. I’ve been styling it with a fitted white tank and black trousers for that effortless off-duty streetwear vibe. Since it acts like a total neutral, I'm already planning to layer it over all my black knit dresses this season.
+```
+
+Trace:
+
+```
+[1] parse_query
+      in:  denim jacket under $50
+      out: dict with keys: description, size, max_price
+[2] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: 7 items: Denim Jacket — Light Wash, Cropped, 90s Track Jacket — Navy/White Stripe, High-Waisted Denim Shorts — Cutoff … +4 more
+      →    7 match(es)
+[3] select_item
+      out: Denim Jacket — Light Wash, Cropped ($42.0, poshmark)
+[4] suggest_outfit
+      in:  Denim Jacket — Light Wash, Cropped ($42.0, poshmark)
+      out: Pair this light wash Wrangler jacket with black straight-leg trousers and a fitted ribbed white tank top for a…
+      →    0 wardrobe item(s)
+[5] create_fit_card
+      in:  Denim Jacket — Light Wash, Cropped ($42.0, poshmark)
+      out: Scored this vintage Wrangler denim jacket on Poshmark for just $42 and I'm obsessed with the structured should…
+```
+
+### matching selected_item
+
+- Query: `denim jeans under $40`
+- Wardrobe: empty
+
+**Try 2**
+
+- stopped early: no
+- selected_item: Vintage Levi's 501 Jeans — Medium Wash ($38.0, depop)
+- search_results: 5
+
+Outfit suggestion:
+
+```
+At $38, these vintage Levi's 501s are a versatile staple. 
+
+**Outfit One: Casual Streetwear**
+Pair the medium-wash jeans with a slightly oversized, forest green graphic t-shirt and white leather low-top sneakers. Layer an unbuttoned, brown plaid flannel shirt over the top. Earthy tones like olive, brown, and crisp white complement the classic indigo hue while leaning into the vintage aesthetic.
+
+**Outfit Two: Elevated Casual**
+Style the denim with a fitted black ribbed tank top and a black leather belt. Add a pair of burgundy block-heel ankle boots to introduce a rich, contrasting color. Deep neutrals and bold jewel tones—like black and oxblood—play up the timeless blue wash for an effortless, polished look.
+```
+
+Fit card:
+
+```
+I scored these vintage Levi's 501s on Depop for just $38, and I'm obsessed with the knee fading and that classic medium wash. I styled them into a casual streetwear fit today with an oversized forest green graphic tee, a brown plaid flannel, and fresh white kicks to lean into those earthy tones. They're seriously the most versatile denim find ever.
+```
+
+Trace:
+
+```
+[1] parse_query
+      in:  denim jeans under $40
+      out: dict with keys: description, size, max_price
+[2] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: 5 items: Vintage Levi's 501 Jeans — Medium Wash, Straight Leg Black Jeans — Faded, High-Waisted Denim Shorts — Cutoff … +2 more
+      →    5 match(es)
+[3] select_item
+      out: Vintage Levi's 501 Jeans — Medium Wash ($38.0, depop)
+[4] suggest_outfit
+      in:  Vintage Levi's 501 Jeans — Medium Wash ($38.0, depop)
+      out: At $38, these vintage Levi's 501s are a versatile staple.   **Outfit One: Casual Streetwear** Pair the medium-…
+      →    0 wardrobe item(s)
+[5] create_fit_card
+      in:  Vintage Levi's 501 Jeans — Medium Wash ($38.0, depop)
+      out: I scored these vintage Levi's 501s on Depop for just $38, and I'm obsessed with the knee fading and that class…
+```
+
+### fit card - jeans
+
+- Query: `vintage Levi's 501 jeans under $50`
+- Wardrobe: example
+
+**Try 1**
+
+- stopped early: no
+- selected_item: Vintage Levi's 501 Jeans — Medium Wash ($38.0, depop)
+- search_results: 10
+
+Outfit suggestion:
+
+```
+**Outfit 1**
+- Vintage Levi's 501 Jeans — Medium Wash
+- White ribbed tank top
+- Vintage black denim jacket
+- Chunky white sneakers
+- Black crossbody bag
+
+**Outfit 2**
+- Vintage Levi's 501 Jeans — Medium Wash
+- Oversized grey crewneck sweatshirt
+- Brown leather belt
+- Black combat boots
+
+**Why they work:**
+Outfit 1 layers the vintage black denim jacket over a white ribbed tank top and 501s for an effortlessly cool, textured monochrome look anchored by chunky white sneakers. Outfit 2 tucks the oversized grey crewneck sweatshirt into the medium wash jeans, cinched with a brown leather belt, and finished with black combat boots for a rugged, casual streetwear vibe.
+```
+
+Fit card:
+
+```
+I couldn't believe my luck finding these vintage Levi's 501 jeans on Depop for just $38. They have the absolute best medium wash and fit like a dream with a cinched belt and combat boots for that rugged streetwear look. It’s safe to say these are about to become the anchor piece in my rotation all season long.
+```
+
+Trace:
+
+```
+[1] parse_query
+      in:  vintage Levi's 501 jeans under $50
+      out: dict with keys: description, size, max_price
+[2] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: 10 items: Vintage Levi's 501 Jeans — Medium Wash, Straight Leg Black Jeans — Faded, Baggy Carpenter Jeans — Dark Wash … +7 more
+      →    10 match(es)
+[3] select_item
+      out: Vintage Levi's 501 Jeans — Medium Wash ($38.0, depop)
+[4] suggest_outfit
+      in:  Vintage Levi's 501 Jeans — Medium Wash ($38.0, depop)
+      out: **Outfit 1** - Vintage Levi's 501 Jeans — Medium Wash - White ribbed tank top - Vintage black denim jacket - C…
+      →    10 wardrobe item(s)
+[5] create_fit_card
+      in:  Vintage Levi's 501 Jeans — Medium Wash ($38.0, depop)
+      out: I couldn't believe my luck finding these vintage Levi's 501 jeans on Depop for just $38. They have the absolut…
+```
+
+### empty wardrobe - jeans styling
+
+- Query: `Vintage Levi's 501 Jeans Medium Wash under $40`
+- Wardrobe: empty
+
+**Try 1**
+
+- stopped early: no
+- selected_item: Vintage Levi's 501 Jeans — Medium Wash ($38.0, depop)
+- search_results: 10
+
+Outfit suggestion:
+
+```
+At $38, these vintage Levi's 501s are an essential wardrobe foundation. 
+
+**Outfit One (Casual Streetwear):**
+Pair the medium wash denim with an oversized heather gray crewneck sweatshirt and crisp white canvas low-top sneakers. Add a black leather belt to anchor the look. This outfit relies on classic neutrals—gray, white, and black—which effortlessly complement the rich indigo tones of the jeans. 
+
+**Outfit Two (Elevated Casual):**
+Combine the jeans with a fitted black ribbed tank top layered under an olive green boxy zip-up jacket. Finish with dark brown leather Chelsea boots. The earthy olive and rich brown create a warm contrast against the blue denim, striking the ideal balance between vintage charm and modern styling.
+```
+
+Fit card:
+
+```
+Scored these vintage Levi's 501s for just $38 on depop, and the medium wash is literally the holy grail of denim. I’ve been living in them styled two ways: dressed down with an oversized heather gray crewneck and white sneakers for effortless streetwear vibes, or elevated with an olive zip-up and brown Chelsea boots. They are officially about to be the hardest-working piece in my rotation.
+```
+
+Trace:
+
+```
+[1] parse_query
+      in:  Vintage Levi's 501 Jeans Medium Wash under $40
+      out: dict with keys: description, size, max_price
+[2] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: 10 items: Vintage Levi's 501 Jeans — Medium Wash, Baggy Carpenter Jeans — Dark Wash, Denim Vest — Medium Wash, Studded … +7 more
+      →    10 match(es)
+[3] select_item
+      out: Vintage Levi's 501 Jeans — Medium Wash ($38.0, depop)
+[4] suggest_outfit
+      in:  Vintage Levi's 501 Jeans — Medium Wash ($38.0, depop)
+      out: At $38, these vintage Levi's 501s are an essential wardrobe foundation.   **Outfit One (Casual Streetwear):** …
+      →    0 wardrobe item(s)
+[5] create_fit_card
+      in:  Vintage Levi's 501 Jeans — Medium Wash ($38.0, depop)
+      out: Scored these vintage Levi's 501s for just $38 on depop, and the medium wash is literally the holy grail of den…
 ```
 
 ```

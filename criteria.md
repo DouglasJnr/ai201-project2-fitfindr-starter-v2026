@@ -70,7 +70,7 @@ Nothing on this path calls the model, so a mismatch can only come from my code. 
 
 ## 4. Something about the fit card
 
-For 5 different items, not two fit cards share the same first sentence and each card is 2-4 sentences in 4 of 4 tries.
+For 5 different items, not two fit cards share the same first sentence and each card is 2-4 sentences in 4 of 5 tries.
 <!-- YOU WRITE THIS ONE.
 
      The fit card calls a model, so the same input can produce different words

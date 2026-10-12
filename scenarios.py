@@ -35,6 +35,79 @@ SCENARIOS = [
         "wardrobe": "empty",
         "criterion": None,
     },
+    {
+        # A query the data matches and passes the same matched item to the other two tools
+        "name": "matching selected_item",
+        "query": "denim jeans under $40",
+        "wardrobe": "empty",
+        "criterion": 3,
+    },
+    {
+        # Distinct Fit card with unique opening sentence. Criterion 4
+        "name": "fit card - jeans",
+        "query": "vintage Levi's 501 jeans under $50",
+        "wardrobe": "example",
+        "criterion": 4,
+    },
+    {
+        # Distinct Fit card with unique opening sentence. Criterion 4
+        "name": "fit card - baby tee",
+        "query": "Y2K butterfly baby tee under $30",
+        "wardrobe": "example",
+        "criterion": 4,
+    },
+    {
+        # Distinct Fit card with unique opening sentence. Criterion 4
+        "name": "fit card - flannel",
+        "query": "red black plaid flannel shirt under $40",
+        "wardrobe": "example",
+        "criterion": 4,
+    },
+    {
+        # Distinct Fit card with unique opening sentence. Criterion 4
+        "name": "fit card - slip dress",
+        "query": "floral silk slip dress under $30",
+        "wardrobe": "example",
+        "criterion": 4,
+    },
+    {
+        # Distinct Fit card with unique opening sentence. Criterion 4
+        "name": "fit card - sneakers",
+        "query": "white platform sneakers under $50",
+        "wardrobe": "example",
+        "criterion": 4,
+    },
+    {
+        # Outfit suggestion using an empty wardrobe
+        "name": "empty wardrobe - jeans styling",
+        "query": "Vintage Levi's 501 Jeans Medium Wash under $40",
+        "wardrobe": "empty",
+        "criterion": 5,
+    },
+    {
+        "name": "empty wardrobe - baby tee styling",
+        "query": "Y2K Baby Tee Butterfly Print under $35",
+        "wardrobe": "empty",
+        "criterion": 5,
+    },
+    {
+        "name": "empty wardrobe - flannel styling",
+        "query": "Oversized Flannel Shirt Plaid Red Black under $40",
+        "wardrobe": "empty",
+        "criterion": 5,
+    },
+    {
+        "name": "empty wardrobe - slip dress styling",
+        "query": "90s Silk Slip Dress Floral Midi under $30",
+        "wardrobe": "empty",
+        "criterion": 5,
+    },
+    {
+        "name": "empty wardrobe - platform sneakers styling",
+        "query": "Platform Sneakers White Chunky Sole under $50",
+        "wardrobe": "empty",
+        "criterion": 5,
+    }
     # TODO: add what your criteria 3, 4 and 5 need.
     #
     # Set "criterion" to the number in criteria.md that the scenario tests.
